@@ -1,3 +1,1 @@
-// Start - Modules & Cabeling Installation 
-// Start - Meter Box Installation
-//Start - Site Visit Work Order
+AND(NOT(ISBLANK({!$Record.Grid_Inquiry_Submitted__c})),OR(ISNEW(),ISCHANGED(!$Record.Grid_Inquiry_Submitted__c)))

@@ -236,7 +236,12 @@ public without sharing class CreateWorkOrder {
                 bodyValue += '<value>' + (order.Inverter_Delivery_Date__c != null ? order.Inverter_Delivery_Date__c.year() + '-' +  order.Inverter_Delivery_Date__c.month() + '-' + order.Inverter_Delivery_Date__c.day() + 'T00:00:00' : (order.MaterialDelivery__c != null ? order.MaterialDelivery__c.year() + '-' +  order.MaterialDelivery__c.month() + '-' + order.MaterialDelivery__c.day() + 'T00:00:00' : '')) + '</value>';
                 bodyValue += '</instructions>'; 
                 bodyValue += '</qualificationData>';
-                 if (order.StartOfInstallationPlanned__c != null) {
+                /*Integer d = order.StartOfInstallationPlanned__c.day();
+                Integer mo = order.StartOfInstallationPlanned__c.month();
+                Integer yr = order.StartOfInstallationPlanned__c.year();
+                DateTime DT = DateTime.newInstance(yr, mo, d);*/
+                DateTime startofInstallationPlannedConverted = order.StartOfInstallationPlanned__c;
+                if (order.StartOfInstallationPlanned__c != null) {
                     bodyValue += '<schedulingData>';
                     // bodyValue += '<agentId  xsi:type="bus:externalEntityId" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">';
                     // bodyValue += '<id>' + order.Primary_Field_Resource__c + '</id>';
@@ -244,7 +249,7 @@ public without sharing class CreateWorkOrder {
                     // bodyValue += '</agentId>';
                     //bodyValue += '<schedulingDate>'+ order.StartOfInstallationPlanned__c +'</schedulingDate>';
                    
-                    bodyValue += '<appointmentDate>'+ order.StartOfInstallationPlanned__c.year() + '-' +  order.StartOfInstallationPlanned__c.month() + '-' + order.StartOfInstallationPlanned__c.day() + 'T00:00:00'+'</appointmentDate>';
+                    bodyValue += '<appointmentDate>'+ startofInstallationPlannedConverted.format('yyyy-MM-dd\'T\'HH:mm:ss')+'</appointmentDate>';
                     bodyValue += '<useSchedulingHour>true</useSchedulingHour>';
                     bodyValue += '</schedulingData>';
                 }
@@ -264,8 +269,8 @@ public without sharing class CreateWorkOrder {
 
                 // Start - Battery Installation
 	    // PSS-142 | Only create Work Order if Battery Installation selected is Yes
-	    if(order.PV_System__r.Battery_Selected__c == 'Yes')
-   {	
+	            if(order.PV_System__r.Battery_Selected__c == 'Yes')
+                {	
                 bodyValue = '<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:bus="http://ws.praxedo.com/v6/businessEvent" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">';
                 bodyValue += '<soap:Header />';
                 bodyValue += '<soap:Body>';
@@ -315,15 +320,15 @@ public without sharing class CreateWorkOrder {
                 bodyValue += '<value>' + (order.Battery_Delivery_Date__c != null ? order.Battery_Delivery_Date__c.year() + '-' +  order.Battery_Delivery_Date__c.month() + '-' + order.Battery_Delivery_Date__c.day() + 'T00:00:00' : (order.MaterialDelivery__c != null ? order.MaterialDelivery__c.year() + '-' +  order.MaterialDelivery__c.month() + '-' + order.MaterialDelivery__c.day() + 'T00:00:00' : '')) + '</value>';
                 bodyValue += '</instructions>';
                 bodyValue += '</qualificationData>';
+                startofInstallationPlannedConverted = order.StartOfInstallationPlanned__c;
        			 if (order.StartOfInstallationPlanned__c != null) {
                     bodyValue += '<schedulingData>';
                     // bodyValue += '<agentId  xsi:type="bus:externalEntityId" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">';
                     // bodyValue += '<id>' + order.Primary_Field_Resource__c + '</id>';
                     // // bodyValue += '<id>Test</id>';
                     // bodyValue += '</agentId>';
-                    //bodyValue += '<schedulingDate>'+ order.StartOfInstallationPlanned__c +'</schedulingDate>';
-                   
-                    bodyValue += '<appointmentDate>'+ order.StartOfInstallationPlanned__c.year() + '-' +  order.StartOfInstallationPlanned__c.month() + '-' + order.StartOfInstallationPlanned__c.day() + 'T00:00:00'+'</appointmentDate>';
+                    //bodyValue += '<schedulingDate>'+ order.StartOfInstallationPlanned__c +'</schedulingDate>';                   
+                    bodyValue += '<appointmentDate>'+ startofInstallationPlannedConverted.format('yyyy-MM-dd\'T\'HH:mm:ss')+'</appointmentDate>';
                     bodyValue += '<useSchedulingHour>true</useSchedulingHour>';
                     bodyValue += '</schedulingData>';
                 }
@@ -474,15 +479,15 @@ public without sharing class CreateWorkOrder {
                 bodyValue += '<value>' + (order.Wallbox_Delivery_Date__c != null ? order.Wallbox_Delivery_Date__c.year() + '-' +  order.Wallbox_Delivery_Date__c.month() + '-' + order.Wallbox_Delivery_Date__c.day() + 'T00:00:00' : (order.MaterialDelivery__c != null ? order.MaterialDelivery__c.year() + '-' +  order.MaterialDelivery__c.month() + '-' + order.MaterialDelivery__c.day() + 'T00:00:00' : '')) + '</value>';
                 bodyValue += '</instructions>'; 
                 bodyValue += '</qualificationData>';
+                startofInstallationPlannedConverted = order.StartOfInstallationPlanned__c;
                 if (order.StartOfInstallationPlanned__c != null) {
                     bodyValue += '<schedulingData>';
                     // bodyValue += '<agentId  xsi:type="bus:externalEntityId" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">';
                     // bodyValue += '<id>' + order.Primary_Field_Resource__c + '</id>';
                     // // bodyValue += '<id>Test</id>';
                     // bodyValue += '</agentId>';
-                    //bodyValue += '<schedulingDate>'+ order.StartOfInstallationPlanned__c +'</schedulingDate>';
-                   
-                    bodyValue += '<appointmentDate>'+ order.StartOfInstallationPlanned__c.year() + '-' +  order.StartOfInstallationPlanned__c.month() + '-' + order.StartOfInstallationPlanned__c.day() + 'T00:00:00'+'</appointmentDate>';
+                    //bodyValue += '<schedulingDate>'+ order.StartOfInstallationPlanned__c +'</schedulingDate>';                   
+                    bodyValue += '<appointmentDate>'+ startofInstallationPlannedConverted.format('yyyy-MM-dd\'T\'HH:mm:ss')+'</appointmentDate>';
                     bodyValue += '<useSchedulingHour>true</useSchedulingHour>';
                     bodyValue += '</schedulingData>';
                 }                

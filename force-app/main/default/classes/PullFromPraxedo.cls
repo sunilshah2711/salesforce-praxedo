@@ -1,1 +1,1 @@
-SearchUpdateWorkOrder.searchWorkOrder();
+SearchUpdateWorkOrder.searchWorkOrders(0);

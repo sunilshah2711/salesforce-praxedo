@@ -91,13 +91,13 @@ public with sharing class PraxedoAPICallout implements Queueable, Database.Allow
             String objectId = resBody.substringBetween('<id>', '</id>');       
             if ((this.soapAction == 'searchEvents') && successResultWithMorePages) {                
                 if (this.objectName == 'Order__c') {                    
-                    SearchUpdateWorkOrder.updateSalesforce(resBody,this.firstResultIndex, false);                    
+                    SearchUpdateWorkOrder.updateSalesforce(resBody,this.firstResultIndex, true);                    
                 }
             }
             else if (this.soapAction == 'searchEvents') {
                 
                 if (this.objectName == 'Order__c') {                    
-                    SearchUpdateWorkOrder.updateSalesforce(resBody,this.firstResultIndex, true);                    
+                    SearchUpdateWorkOrder.updateSalesforce(resBody,this.firstResultIndex, false);                    
                     
                 }
             } else if (successResult && String.isNotBlank(objectId) && objectId.containsIgnoreCase(this.rId)) {
@@ -126,7 +126,7 @@ public with sharing class PraxedoAPICallout implements Queueable, Database.Allow
                     }
                 }
             }
-
+            System.debug('Inside PraxedoAPICallout.apxc>>>Line No. 129>>>'+this.soapAction);
             //Print response body to Logger
             Logger__c logger = new Logger__c();
             logger.SObject_Type__c = this.objectName;
@@ -150,7 +150,9 @@ public with sharing class PraxedoAPICallout implements Queueable, Database.Allow
             }
             
             insert logger;
+            System.debug('Inside PraxedoAPICallout.apxc>>>Line No. 153>>>'+this.bodyValue.size());
             this.bodyValue.remove(0);
+            System.debug('Inside PraxedoAPICallout.apxc>>>Line No. 155>>>'+this.bodyValue.size());
             if (this.bodyValue.size() > 0) {
                 System.enqueueJob(new PraxedoAPICallout(this.objectName, this.rId, this.endPoint, this.method, this.authorizationToken, this.soapAction, this.bodyValue, this.praxedoInput));
             }
