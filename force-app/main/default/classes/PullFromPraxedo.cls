@@ -17,8 +17,8 @@ public without sharing class PullfromPraxedo implements Schedulable {
         bodyValue += '<dateConstraints>';
         //bodyValue += '<dateRange>'+ Datetime.now().addHours(-1).format('yyyy-MM-dd\'T\'HH:mm:ss') + '</dateRange>';
         //bodyValue += '<dateRange>'+ Datetime.now().format('yyyy-MM-dd\'T\'HH:mm:ss') + '</dateRange>';
-        bodyValue += '<dateRange>'+ Datetime.now().addDays(-1).format('yyyy-MM-dd\'T\'HH:mm:ss') + '</dateRange>';
-        bodyValue += '<dateRange>'+ Datetime.now().addDays(1).format('yyyy-MM-dd\'T\'HH:mm:ss') + '</dateRange>';
+        bodyValue += '<dateRange>'+ Datetime.now().addDays(-4).format('yyyy-MM-dd\'T\'HH:mm:ss') + '</dateRange>';
+        bodyValue += '<dateRange>'+ Datetime.now().addDays(-2).format('yyyy-MM-dd\'T\'HH:mm:ss') + '</dateRange>';
         bodyValue += '<name>lastModificationDate</name>';
         bodyValue += '</dateConstraints>';
         bodyValue += '</request>';
@@ -64,12 +64,13 @@ public without sharing class PullfromPraxedo implements Schedulable {
             
             //Split the response into entities as each entity corresponds to a work order            
             List<String> entityList = body.split('</entities><entities>');
+            System.debug(entityList);
             //You can find number of work orders by number of occurences of ', <completionData>' OR '</extensions><id>'
             
             //Prepare the Process ID list that can be used in the next step to fetch the related Orders, to avoid multiple read API calls
             List<String> processIdList = new List<String>();            
             processIdList = prepareProcessIdList(entityList);
-            System.debug(processIdList);
+            System.debug(errorTemplate+'Line No. 73'+processIdList);
             /*
             (qwe-128, qwe-127, qwe-126, qwe-125, qwe-124, qwe-123, null)
             */
@@ -129,6 +130,16 @@ public without sharing class PullfromPraxedo implements Schedulable {
         }
     }
 
+    public static void executeStatic(Integer firstResultIndex){       
+        //Prepare Request
+        String request = prepareRequest(firstResultIndex);
+            
+        //Call Praxedo API
+        if(!Test.isRunningTest()){
+            System.enqueueJob(new PraxedoAPICallout('Order__c','', endPoint, method, authorizationToken, soapAction, request,null,firstResultIndex));
+        }
+    }
+
     public static List<String> prepareProcessIdList(List<String> entityList)
     {   
         List<String> outputList = new List<String>();
@@ -177,14 +188,14 @@ public without sharing class PullfromPraxedo implements Schedulable {
         return outputList;
     }
 
-    public static Id fetchOrderId(List<Order__c> orderList,String processId)
+    public static Order__c fetchOrder(List<Order__c> orderList,String processId)
     {        
         //System.debug(errorTemplate+'168'+orderList+processId);
         for(Order__c order:orderList)
         {
             if(order.ProcessID__c==processId){
                 System.debug(errorTemplate+'172>>>match found');
-                return order.Id;
+                return order;
             }            
             
         }
@@ -240,47 +251,60 @@ public without sharing class PullfromPraxedo implements Schedulable {
                     
                     //Add to orderList to be updated after the for loop
                     orderList.add(orderSingle); 
-                    continue;
-                } 
-            
-            
-                //Search for Inverter Installation Work Order
-                processId = RegexMatchPattern.findOne(entity,'<id>([a-z0-9-]*) .*Inverter Installation</id>');
-                status = RegexMatchPattern.findOne(entity,'<status>(.*)</status>');
-                if (processId.length()>0 && status == 'VALIDATED') {
-
-                    //Create a Single Order record to be added to list
-                    orderSingle = new Order__c();
-                    orderSingle.Id = fetchOrderId(orderListArg,processId);                    
-                    pvSystem = new PV_System__c();
-                    pvSystem.Id = orderSingle.PV_System__c;
-
-                    ac_huawei_inverter_1_seriennummer = RegexMatchPattern.findOne(entity,'<id>ac_huawei_inverter_1_seriennummer</id>.*?<value>(.*?)</value>.*?</fields>');                    
-                    ac_huawei_inverter_2_seriennummer = RegexMatchPattern.findOne(entity,'<id>ac_huawei_inverter_2_seriennummer</id>.*?<value>(.*)</value>.*?</fields>');
-                    ac_fronius_inverter_1_seriennummer = RegexMatchPattern.findOne(entity,'<id>ac_fronius_inverter_1_seriennummer</id>.*?<value>(.*)</value>.*?</fields>');
-                    ac_fronius_inverter_2_seriennummer = RegexMatchPattern.findOne(entity,'<id>ac_fronius_inverter_2_seriennummer</id>.*?<value>(.*?)</value>.*?</fields>');
-                    
-                    if (ac_fronius_inverter_1_seriennummer.length()>0) pvSystem.Serial_Number_Inverter_Main__c = ac_fronius_inverter_1_seriennummer;
-                    if (ac_huawei_inverter_1_seriennummer.length()>0 && !(ac_fronius_inverter_1_seriennummer.length()>0))  pvSystem.Serial_Number_Inverter_Main__c = ac_huawei_inverter_1_seriennummer;                    
-                    if (ac_fronius_inverter_2_seriennummer.length()>0) pvSystem.Serial_Number_Inverter_2__c = ac_fronius_inverter_2_seriennummer;
-                    if (ac_huawei_inverter_2_seriennummer.length()>0 && !(ac_fronius_inverter_2_seriennummer.length()>0))  pvSystem.Serial_Number_Inverter_2__c = ac_huawei_inverter_2_seriennummer;
-
-                    //Update PV System Record List
-                    pvSystemList.add(pvsystem);                    
+                    System.debug(errorTemplate+'254'+orderList);
                     continue;
                 }
+            } 
+
+            catch (Exception e){}
+            
+            
+            //Search for Inverter Installation Work Order
+            try{
+            processId = RegexMatchPattern.findOne(entity,'<id>([a-z0-9-]*) .*Inverter Installation</id>');
+            status = RegexMatchPattern.findOne(entity,'<status>(.*)</status>');
+            //System.debug(errorTemplate+'266'+processId+status+pvSystemList);                         
+            if (processId.length()>0 && status == 'VALIDATED') {
+                System.debug(errorTemplate+'268'+processId+status+pvSystemList);             
+                //Create a Single Order record to be added to list
+                orderSingle = new Order__c();
+                orderSingle = fetchOrder(orderListArg,processId); 
+                System.debug(errorTemplate+'272'+orderSingle);                
+                pvSystem = new PV_System__c();
+                pvSystem.Id = orderSingle.PV_System__c;
+                System.debug(errorTemplate+'274'+pvSystem);             
+                ac_huawei_inverter_1_seriennummer = RegexMatchPattern.findOne(entity,'<id>ac_huawei_inverter_1_seriennummer</id>.*?<value>(.*?)</value>.*?</fields>');                    
+                ac_huawei_inverter_2_seriennummer = RegexMatchPattern.findOne(entity,'<id>ac_huawei_inverter_2_seriennummer</id>.*?<value>(.*)</value>.*?</fields>');
+                ac_fronius_inverter_1_seriennummer = RegexMatchPattern.findOne(entity,'<id>ac_fronius_inverter_1_seriennummer</id>.*?<value>(.*)</value>.*?</fields>');
+                ac_fronius_inverter_2_seriennummer = RegexMatchPattern.findOne(entity,'<id>ac_fronius_inverter_2_seriennummer</id>.*?<value>(.*?)</value>.*?</fields>');
+                
+                if (ac_fronius_inverter_1_seriennummer.length()>0) pvSystem.Serial_Number_Inverter_Main__c = ac_fronius_inverter_1_seriennummer;
+                if (ac_huawei_inverter_1_seriennummer.length()>0 && !(ac_fronius_inverter_1_seriennummer.length()>0))  pvSystem.Serial_Number_Inverter_Main__c = ac_huawei_inverter_1_seriennummer;                    
+                if (ac_fronius_inverter_2_seriennummer.length()>0) pvSystem.Serial_Number_Inverter_2__c = ac_fronius_inverter_2_seriennummer;
+                if (ac_huawei_inverter_2_seriennummer.length()>0 && !(ac_fronius_inverter_2_seriennummer.length()>0))  pvSystem.Serial_Number_Inverter_2__c = ac_huawei_inverter_2_seriennummer;
+
+                //Update PV System Record List
+                pvSystemList.add(pvsystem);
+                System.debug(errorTemplate+'285'+pvSystemList);
+                continue;
+            }
+            }
+            catch (Exception e){}     
+
                     
-                //Search for Battery Installation Work Order
+            //Search for Battery Installation Work Order
+            try {
                 processId = RegexMatchPattern.findOne(entity,'<id>([a-z0-9-]*) .*Battery Installation</id>');
                 status = RegexMatchPattern.findOne(entity,'<status>(.*)</status>');
-
+                //System.debug(errorTemplate+'298'+processId+status+pvSystemList);                         
                 if (processId.length()>0 && status == 'VALIDATED') {
+                    System.debug(errorTemplate+'300'+processId+status+pvSystemList);                         
                     //Create a Single Order record to be added to list
                     orderSingle = new Order__c();
-                    orderSingle.Id = fetchOrderId(orderListArg,processId);                    
+                    orderSingle = fetchOrder(orderListArg,processId); 
                     pvSystem = new PV_System__c();
                     pvSystem.Id = orderSingle.PV_System__c;
-
+                    System.debug(errorTemplate+'306'+pvSystem);             
                     string serial_number_BCU_huawei_1 = RegexMatchPattern.findOne(entity,'<id>serial_number_BCU_huawei_1</id>.*?<value>(.*?)</value>.*?</fields>');                    
                     string serial_number_BCU_byd_1 = RegexMatchPattern.findOne(entity,'<id>serial_number_BCU_byd_1</id>.*?<value>(.*?)</value>.*?</fields>');
                     
@@ -288,13 +312,12 @@ public without sharing class PullfromPraxedo implements Schedulable {
                     if (serial_number_BCU_byd_1.length()>0 && !(serial_number_BCU_huawei_1.length()>0))  pvSystem.Serial_Number_Battery__c = serial_number_BCU_byd_1;
 
                     //Update PV System Record List
-                    pvSystemList.add(pvsystem);                    
+                    pvSystemList.add(pvsystem);       
+                    System.debug(errorTemplate+'313'+pvSystemList);             
                     continue;                
                 }                                
             }
-            catch (Exception e){
-                    System.debug(e.getMessage());
-            }                       
+            catch (Exception e){}                       
         }
 
 

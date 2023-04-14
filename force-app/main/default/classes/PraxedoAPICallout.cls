@@ -97,7 +97,7 @@ public with sharing class PraxedoAPICallout implements Queueable, Database.Allow
             else if (this.soapAction == 'searchEvents') {
                 
                 if (this.objectName == 'Order__c') {                    
-                    SearchUpdateWorkOrder.updateSalesforce(resBody,this.firstResultIndex, false);                    
+                    PullfromPraxedo.updateSalesforce(resBody,this.firstResultIndex, false);                    
                     
                 }
             } else if (successResult && String.isNotBlank(objectId) && objectId.containsIgnoreCase(this.rId)) {

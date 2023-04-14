@@ -1,1 +1,1 @@
-SearchUpdateWorkOrder.searchWorkOrders(0);
+PullfromPraxedo.executeStatic(0);
