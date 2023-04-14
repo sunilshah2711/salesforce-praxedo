@@ -91,7 +91,7 @@ public with sharing class PraxedoAPICallout implements Queueable, Database.Allow
             String objectId = resBody.substringBetween('<id>', '</id>');       
             if ((this.soapAction == 'searchEvents') && successResultWithMorePages) {                
                 if (this.objectName == 'Order__c') {                    
-                    SearchUpdateWorkOrder.updateSalesforce(resBody,this.firstResultIndex, true);                    
+                    PullfromPraxedo.updateSalesforce(resBody,this.firstResultIndex, true);                    
                 }
             }
             else if (this.soapAction == 'searchEvents') {

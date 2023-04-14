@@ -2,3 +2,6 @@ AND(NOT(ISBLANK({!$Record.Grid_Inquiry_Submitted__c})),OR(ISNEW(),ISCHANGED(!$Re
 
 AND(NOT(ISBLANK({!$Record.Grid_Inquiry_Submitted__c})),OR(ISNEW(),ISCHANGED({!$Record.Grid_Inquiry_Submitted__c})))
 
+test
+
+test2
