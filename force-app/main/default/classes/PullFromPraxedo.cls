@@ -242,7 +242,7 @@ public without sharing class PullfromPraxedo implements Schedulable {
                     processId = RegexMatchPattern.findOne(entity,'<id>([a-z0-9-]*) .*Site Visit</id>');                
 
                     //Create a Single Order record to be added to list
-                    orderSingle.Id = fetchOrderId(orderListArg,processId);
+                    orderSingle = fetchOrder(orderListArg,processId);
 
                     
                     string dateV = appointmentDate.split('T')[0];
