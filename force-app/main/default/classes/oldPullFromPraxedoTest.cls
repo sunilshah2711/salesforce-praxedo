@@ -1,5 +1,9 @@
 @isTest(SeeAllData=True)
-public class SearchUpdateWorkOrderTest {
+public class PullFromPraxedoTest {
+
+    //Arrange
+
+
     // Dummy CRON expression: immediate 
     // Because this is a test, job executes
     // immediately after Test.stopTest().
@@ -45,7 +49,7 @@ public class SearchUpdateWorkOrderTest {
             Test.startTest();
             String jobId = System.schedule('ScheduledApexTest',
             CRON_EXP,
-            new SearchUpdateWorkOrder());   
+            new PullfromPraxedo());   
             Test.stopTest();
         } catch (Exception ex) {
             System.debug('ex>>>' + ex);  

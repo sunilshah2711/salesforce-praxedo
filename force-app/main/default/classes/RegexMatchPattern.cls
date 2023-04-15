@@ -34,23 +34,38 @@ public class RegexMatchPattern {
     {
         List<String> matchGroups = new List<String>();        
         Pattern p = Pattern.compile(patternString);
-        Matcher m = p.matcher(matchString);
-        m.find();        
+        Matcher m = p.matcher(matchString);        
+        Boolean found = m.find();
         System.debug(patternString);
         //System.debug(matchString);
         try{
-            //System.debug(m.group());
-            if(m.group(1)!=null)
-            {
-                return m.group(1);                
+            if(found) {
+                try{
+                //System.debug(m.group());
+                if(m.group(1)!=null)
+                {
+                    return m.group(1);                
+                }
+                return null;
+                }
+                catch(Exception e)
+                {
+                    return null;
+                    /*
+                    System.debug(m.group());
+                    System.debug(e.getMessage());
+                    return null;
+                    */
+                }
             }
-            return null;
+            else{
+                return null;
+            }
         }
         catch(Exception e)
         {
-            System.debug(m.group());
-            System.debug(e.getMessage());
-            return null;
+                    System.debug(e.getMessage());
+                    return null;
         }
 
     }

@@ -64,7 +64,7 @@ public without sharing class PullfromPraxedo implements Schedulable {
             
             //Split the response into entities as each entity corresponds to a work order            
             List<String> entityList = body.split('</entities><entities>');
-            System.debug(entityList);
+            System.debug(errorTemplate+'67>>>'+entityList.size());
             //You can find number of work orders by number of occurences of ', <completionData>' OR '</extensions><id>'
             
             //Prepare the Process ID list that can be used in the next step to fetch the related Orders, to avoid multiple read API calls
@@ -200,6 +200,72 @@ public without sharing class PullfromPraxedo implements Schedulable {
             
         }
         return null;
+    } 
+
+    public static List<PV_System__c> addToPVSystemList(List<PV_System__c> pvSystemList, PV_System__c pvSystemSingle, String type)
+    {        
+        System.debug(errorTemplate+'207>>>'+pvSystemList+pvSystemSingle+type);
+        List<PV_System__c> localPVSystemList = new List<PV_System__c>();
+        //System.debug(errorTemplate+'168'+orderList+processId);
+        if(pvSystemList.isEmpty()) localPVSystemList.add(pvSystemSingle);
+        else {
+            for(PV_System__c pvSystemLoopSingle:pvSystemList)
+            {
+
+                if(pvSystemLoopSingle.Id==pvSystemSingle.Id){
+                    
+                    if(type == 'inverter')
+                    {
+                        pvSystemLoopSingle.Serial_Number_Inverter_Main__c = pvSystemSingle.Serial_Number_Inverter_Main__c;
+                        pvSystemLoopSingle.Serial_Number_Inverter_2__c = pvSystemSingle.Serial_Number_Inverter_2__c;
+                        System.debug(errorTemplate+'218>>>match found');
+                    }
+                    if(type == 'battery')
+                    {
+                        pvSystemLoopSingle.Serial_Number_Battery__c = pvSystemSingle.Serial_Number_Battery__c;
+                        System.debug(errorTemplate+'223>>>match found');
+                    }
+                    if(!duplicatePVSystemRecord(localPVSystemList,pvSystemLoopSingle)){
+                                            localPVSystemList.add(pvSystemLoopSingle);
+                    }
+                }            
+                else{
+                    localPVSystemList.add(pvSystemLoopSingle);
+                }
+                
+            
+            }
+        }
+        
+        System.debug(errorTemplate+'231>>>'+localPVSystemList);
+        return localPVSystemList;
+    }  
+    
+    public static Boolean duplicatePVSystemRecord(List<PV_System__c> pvSystemList, PV_System__c pvSystemSingle)
+    {        
+        for(PV_System__c pvSystemLoopSingle:pvSystemList)
+        {
+            if(pvSystemLoopSingle.Id==pvSystemSingle.Id){
+                System.debug(errorTemplate+'225>>>match found');
+                    return true;
+            }            
+            
+        }
+        return false;
+    } 
+    
+    public static Boolean duplicateOrderRecord(List<Order__c> orderList, Order__c orderSingle)
+    {        
+        //System.debug(errorTemplate+'168'+orderList+processId);
+        for(Order__c orderLoopSingle:orderList)
+        {
+            if(orderLoopSingle.Id==orderSingle.Id){
+                System.debug(errorTemplate+'225>>>match found');
+                    return true;
+            }            
+            
+        }
+        return false;
     }   
 
     public static void updateOrderPVSystemRecords(List<String> entityList, List<Order__c> orderListArg)
@@ -227,7 +293,7 @@ public without sharing class PullfromPraxedo implements Schedulable {
             string ac_fronius_inverter_1_seriennummer;
             string ac_fronius_inverter_2_seriennummer;
             Order__c orderSingle = new Order__c();
-            PV_System__c pvSystem = new PV_System__c();
+            PV_System__c pvSystemSingle = new PV_System__c();
 
                     
             try{
@@ -237,7 +303,7 @@ public without sharing class PullfromPraxedo implements Schedulable {
                 appointmentDate = RegexMatchPattern.findOne(entity,'<appointmentDate>(.*)</appointmentDate>');                
                 schedulingDate = RegexMatchPattern.findOne(entity,'<schedulingDate>(.*)</schedulingDate>');                
 
-                if(processId.length()>0 &&  appointmentDate.length()>0)
+                if(processId!=null &&  appointmentDate!=null)
                 {
                     processId = RegexMatchPattern.findOne(entity,'<id>([a-z0-9-]*) .*Site Visit</id>');                
 
@@ -251,6 +317,8 @@ public without sharing class PullfromPraxedo implements Schedulable {
                     
                     //Add to orderList to be updated after the for loop
                     orderList.add(orderSingle); 
+                    if(!duplicateOrderRecord(orderList, orderSingle)) orderList.add(orderSingle);       
+
                     System.debug(errorTemplate+'254'+orderList);
                     continue;
                 }
@@ -264,28 +332,28 @@ public without sharing class PullfromPraxedo implements Schedulable {
             processId = RegexMatchPattern.findOne(entity,'<id>([a-z0-9-]*) .*Inverter Installation</id>');
             status = RegexMatchPattern.findOne(entity,'<status>(.*)</status>');
             //System.debug(errorTemplate+'266'+processId+status+pvSystemList);                         
-            if (processId.length()>0 && status == 'VALIDATED') {
+            if (processId!=null && status == 'VALIDATED') {
                 System.debug(errorTemplate+'268'+processId+status+pvSystemList);             
                 //Create a Single Order record to be added to list
-                orderSingle = new Order__c();
                 orderSingle = fetchOrder(orderListArg,processId); 
                 System.debug(errorTemplate+'272'+orderSingle);                
-                pvSystem = new PV_System__c();
-                pvSystem.Id = orderSingle.PV_System__c;
-                System.debug(errorTemplate+'274'+pvSystem);             
+                pvSystemSingle.Id = orderSingle.PV_System__c;
+                System.debug(errorTemplate+'274'+pvSystemSingle);             
                 ac_huawei_inverter_1_seriennummer = RegexMatchPattern.findOne(entity,'<id>ac_huawei_inverter_1_seriennummer</id>.*?<value>(.*?)</value>.*?</fields>');                    
                 ac_huawei_inverter_2_seriennummer = RegexMatchPattern.findOne(entity,'<id>ac_huawei_inverter_2_seriennummer</id>.*?<value>(.*)</value>.*?</fields>');
                 ac_fronius_inverter_1_seriennummer = RegexMatchPattern.findOne(entity,'<id>ac_fronius_inverter_1_seriennummer</id>.*?<value>(.*)</value>.*?</fields>');
                 ac_fronius_inverter_2_seriennummer = RegexMatchPattern.findOne(entity,'<id>ac_fronius_inverter_2_seriennummer</id>.*?<value>(.*?)</value>.*?</fields>');
                 
-                if (ac_fronius_inverter_1_seriennummer.length()>0) pvSystem.Serial_Number_Inverter_Main__c = ac_fronius_inverter_1_seriennummer;
-                if (ac_huawei_inverter_1_seriennummer.length()>0 && !(ac_fronius_inverter_1_seriennummer.length()>0))  pvSystem.Serial_Number_Inverter_Main__c = ac_huawei_inverter_1_seriennummer;                    
-                if (ac_fronius_inverter_2_seriennummer.length()>0) pvSystem.Serial_Number_Inverter_2__c = ac_fronius_inverter_2_seriennummer;
-                if (ac_huawei_inverter_2_seriennummer.length()>0 && !(ac_fronius_inverter_2_seriennummer.length()>0))  pvSystem.Serial_Number_Inverter_2__c = ac_huawei_inverter_2_seriennummer;
+                if (ac_fronius_inverter_1_seriennummer!=null) pvSystemSingle.Serial_Number_Inverter_Main__c = ac_fronius_inverter_1_seriennummer;
+                if (ac_huawei_inverter_1_seriennummer!=null && !(ac_fronius_inverter_1_seriennummer!=null))  pvSystemSingle.Serial_Number_Inverter_Main__c = ac_huawei_inverter_1_seriennummer;                    
+                if (ac_fronius_inverter_2_seriennummer!=null) pvSystemSingle.Serial_Number_Inverter_2__c = ac_fronius_inverter_2_seriennummer;
+                if (ac_huawei_inverter_2_seriennummer!=null && !(ac_fronius_inverter_2_seriennummer!=null))  pvSystemSingle.Serial_Number_Inverter_2__c = ac_huawei_inverter_2_seriennummer;
 
                 //Update PV System Record List
-                pvSystemList.add(pvsystem);
-                System.debug(errorTemplate+'285'+pvSystemList);
+                System.debug(errorTemplate+'286'+pvSystemList+pvSystemSingle);             
+                //if(!duplicatePVSystemRecord(pvSystemList, pvSystemSingle)) pvSystemList.add(pvSystemSingle);       
+                pvSystemList = addToPVSystemList(pvSystemList, pvSystemSingle,'inverter');       
+                System.debug(errorTemplate+'288'+pvSystemList);
                 continue;
             }
             }
@@ -297,23 +365,22 @@ public without sharing class PullfromPraxedo implements Schedulable {
                 processId = RegexMatchPattern.findOne(entity,'<id>([a-z0-9-]*) .*Battery Installation</id>');
                 status = RegexMatchPattern.findOne(entity,'<status>(.*)</status>');
                 //System.debug(errorTemplate+'298'+processId+status+pvSystemList);                         
-                if (processId.length()>0 && status == 'VALIDATED') {
+                if (processId!=null && status == 'VALIDATED') {
                     System.debug(errorTemplate+'300'+processId+status+pvSystemList);                         
                     //Create a Single Order record to be added to list
-                    orderSingle = new Order__c();
                     orderSingle = fetchOrder(orderListArg,processId); 
-                    pvSystem = new PV_System__c();
-                    pvSystem.Id = orderSingle.PV_System__c;
-                    System.debug(errorTemplate+'306'+pvSystem);             
+                    pvSystemSingle.Id = orderSingle.PV_System__c;
+                    System.debug(errorTemplate+'306'+pvSystemSingle);             
                     string serial_number_BCU_huawei_1 = RegexMatchPattern.findOne(entity,'<id>serial_number_BCU_huawei_1</id>.*?<value>(.*?)</value>.*?</fields>');                    
                     string serial_number_BCU_byd_1 = RegexMatchPattern.findOne(entity,'<id>serial_number_BCU_byd_1</id>.*?<value>(.*?)</value>.*?</fields>');
                     
-                    if (serial_number_BCU_huawei_1.length()>0) pvSystem.Serial_Number_Battery__c = serial_number_BCU_huawei_1;
-                    if (serial_number_BCU_byd_1.length()>0 && !(serial_number_BCU_huawei_1.length()>0))  pvSystem.Serial_Number_Battery__c = serial_number_BCU_byd_1;
+                    if (serial_number_BCU_huawei_1!=null) pvSystemSingle.Serial_Number_Battery__c = serial_number_BCU_huawei_1;
+                    if (serial_number_BCU_byd_1!=null && !(serial_number_BCU_huawei_1!=null))  pvSystemSingle.Serial_Number_Battery__c = serial_number_BCU_byd_1;
 
                     //Update PV System Record List
-                    pvSystemList.add(pvsystem);       
-                    System.debug(errorTemplate+'313'+pvSystemList);             
+                    System.debug(errorTemplate+'312'+pvSystemList);             
+                    pvSystemList = addToPVSystemList(pvSystemList, pvSystemSingle,'battery');       
+                    System.debug(errorTemplate+'314'+pvSystemList);             
                     continue;                
                 }                                
             }
